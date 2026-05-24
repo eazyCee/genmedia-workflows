@@ -15,6 +15,7 @@ st.set_page_config(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGOS_DIR = os.path.join(BASE_DIR, "assets", "logos")
 PRODUCTS_DIR = os.path.join(BASE_DIR, "assets", "products")
+MODELS_DIR = os.path.join(BASE_DIR, "assets", "models")
 STOREFRONTS_DIR = os.path.join(BASE_DIR, "assets", "storefronts")
 
 def load_preapproved_assets(directory_path) -> dict:
@@ -36,6 +37,7 @@ def load_preapproved_assets(directory_path) -> dict:
 # Load assets dynamically
 PREAPPROVED_LOGOS = load_preapproved_assets(LOGOS_DIR)
 PREAPPROVED_PRODUCTS = load_preapproved_assets(PRODUCTS_DIR)
+PREAPPROVED_MODELS = load_preapproved_assets(MODELS_DIR)
 PREAPPROVED_STOREFRONTS = load_preapproved_assets(STOREFRONTS_DIR)
 
 # Preapproved Colorways
@@ -103,7 +105,7 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.header("Product + Model Mixer")
     st.markdown(
-        "Combine a product image and a model image into a high-quality, seamless shot."
+        "Combine a product image and a model image into a high-quality, seamless fashion shot."
     )
     
     col1, col2 = st.columns(2)
@@ -132,11 +134,11 @@ with tab1:
             
     st.divider()
     
-    st.subheader("3. Placement Instructions")
+    st.subheader("3. Placement Instructions (Optional)")
     placement_instruction = st.text_area(
-        "How should the product be placed or used on the model?",
+        "Specific placement instructions (Leave blank for high-quality automatic synthesis):",
         placeholder="e.g., 'Place the sneakers on the model's feet naturally, matching lighting and perspective.'",
-        help="Describe exactly how the product should blend onto the model."
+        help="Describe exactly how the product should blend onto the model if you have a specific preference."
     )
     
     generate_mixer = st.button("✨ Generate Mixed Asset", type="primary")
@@ -144,20 +146,26 @@ with tab1:
     if generate_mixer:
         if not uploaded_product_mixer or not uploaded_model_mixer:
             st.error("Please upload both a product image and a model image.")
-        elif not placement_instruction.strip():
-            st.error("Please provide placement instructions.")
         else:
             with st.spinner("Synthesizing images using Gemini... This may take up to 30 seconds."):
                 try:
                     prod_part = pil_to_part(prod_img)
                     model_part = pil_to_part(model_img)
                     
-                    prompt_text = f"""
-                    Analyze the provided product image and the model image.
-                    Generate a single unified photo where the model is wearing or using the product naturally.
-                    Follow this placement instruction: {placement_instruction}.
-                    Ensure realistic lighting, perfect blending, natural shadows, and high aesthetic quality.
+                    # Prompt engineered with visual design and commercial photography best practices
+                    base_mixer_prompt = """
+                    You are an expert commercial fashion and product photographer.
+                    Analyze the provided product image and the model image carefully.
+                    Generate a single, highly cohesive, ultra-realistic commercial fashion photograph.
+                    The model must be naturally wearing, holding, or using the product as the main focal point.
+                    Maintain immaculate physical shadow alignment, seamless material/edge blending, realistic surface textures, correct camera perspective, and high-end professional studio lighting.
+                    The composition must feel highly organic, clean, and premium.
                     """
+                    
+                    if placement_instruction.strip():
+                        prompt_text = base_mixer_prompt + f"\nAdditionally, follow this specific arrangement detail: {placement_instruction}."
+                    else:
+                        prompt_text = base_mixer_prompt
                     
                     result_img = generate_onbrand_asset(
                         parts_list=[prod_part, model_part],
@@ -196,7 +204,8 @@ with tab2:
         st.subheader("1. Brand Logo")
         logo_choice = st.radio(
             "Select a preapproved brand logo:",
-            options=list(PREAPPROVED_LOGOS.keys()) + ["Custom Upload..."]
+            options=list(PREAPPROVED_LOGOS.keys()) + ["Custom Upload..."],
+            key="brand_logo_choice"
         )
         
         logo_to_use = None
@@ -219,11 +228,32 @@ with tab2:
         )
         st.info(f"**Palette Details:** {COLORWAYS[colorway_choice]}")
         
+        st.divider()
+        
+        st.subheader("3. Model Image (Optional)")
+        model_choice_brand = st.radio(
+            "Select a preapproved model silhouette or upload custom (Optional):",
+            options=["None"] + list(PREAPPROVED_MODELS.keys()) + ["Custom Upload..."],
+            key="brand_model_choice"
+        )
+        
+        model_to_use_brand = None
+        if model_choice_brand == "Custom Upload...":
+            uploaded_model_brand = st.file_uploader("Upload model image (PNG/JPG)", type=["png", "jpg", "jpeg"], key="brand_model_upload")
+            if uploaded_model_brand:
+                model_to_use_brand = Image.open(uploaded_model_brand)
+                st.image(model_to_use_brand, caption="Custom Model Preview", width=150)
+        elif model_choice_brand != "None":
+            model_path_brand = os.path.join(MODELS_DIR, PREAPPROVED_MODELS[model_choice_brand])
+            model_to_use_brand = Image.open(model_path_brand)
+            st.image(model_to_use_brand, caption=f"{model_choice_brand} Preview", width=150)
+        
     with col_right:
-        st.subheader("3. Product Image")
+        st.subheader("4. Product Image")
         product_choice = st.radio(
             "Select a preapproved product or upload custom:",
-            options=list(PREAPPROVED_PRODUCTS.keys()) + ["Custom Upload..."]
+            options=list(PREAPPROVED_PRODUCTS.keys()) + ["Custom Upload..."],
+            key="brand_product_choice"
         )
         
         product_to_use = None
@@ -239,7 +269,7 @@ with tab2:
             
         st.divider()
         
-        st.subheader("4. Environment Setting")
+        st.subheader("5. Environment Setting")
         setting_choice = st.selectbox(
             "Select a preapproved environment setting:",
             options=list(SETTINGS.keys())
@@ -248,7 +278,7 @@ with tab2:
         
     st.divider()
     
-    st.subheader("5. Marketing & Style Enhancements (Optional)")
+    st.subheader("6. Marketing & Style Enhancements (Optional)")
     extra_prompt = st.text_input(
         "Additional text instructions/details",
         placeholder="e.g., 'Add a few water droplets on the surface', 'Keep it ultra minimalist with clean composition'",
@@ -268,6 +298,10 @@ with tab2:
                     logo_part = pil_to_part(logo_to_use)
                     product_part = pil_to_part(product_to_use)
                     
+                    parts_list = [logo_part, product_part]
+                    if model_to_use_brand:
+                        parts_list.append(pil_to_part(model_to_use_brand))
+                    
                     setting_desc = SETTINGS[setting_choice]
                     color_desc = COLORWAYS[colorway_choice]
                     
@@ -280,11 +314,14 @@ with tab2:
                     Ensure hyper-realistic rendering, accurate shadows, premium product highlights, and a high-end commercial aesthetic.
                     """
                     
+                    if model_to_use_brand:
+                        prompt_text += "\nThe model provided in the reference image must be clearly present in the scene, interacting with or showcasing the product naturally."
+                    
                     if extra_prompt.strip():
                         prompt_text += f"\nAdditional styling request: {extra_prompt}."
                         
                     result_brand_img = generate_onbrand_asset(
-                        parts_list=[logo_part, product_part],
+                        parts_list=parts_list,
                         prompt_text=prompt_text,
                         aspect_ratio=aspect_ratio
                     )
