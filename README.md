@@ -21,6 +21,12 @@ The application is powered by **Gemini 3.1 Flash Image Preview** on Google Verte
 - **Environment Settings:** Choose from studio lighting, nature settings, cafes, or office spaces.
 - Generates high-end commercial ads that strictly respect your brand guidelines.
 
+### 🏪 Workflow C: Storefront Visualizer
+- Upload your logo, brand sign, banner design, or custom artwork.
+- Choose from preapproved blank storefront templates or upload your own storefront canvas.
+- Select preapproved storefront styles (e.g. Luxury Boutique, Cozy Cafe, Modern Tech Store, Minimalist Apparel).
+- Generates ultra-realistic visualizations showing how your design fits naturally on the storefront window, sign bracket, or billboard facade, matching reflections, perspectives, and shadows perfectly.
+
 ---
 
 ## Directory Structure
@@ -35,14 +41,28 @@ The application is powered by **Gemini 3.1 Flash Image Preview** on Google Verte
 │   ├── utils.py          # Vertex AI API interactions
 │   └── assets/
 │       ├── logos/        # Preapproved logo assets
-│       │   ├── tech_minimal.png
-│       │   ├── aura_organic.png
-│       │   └── zenith_bold.png
-│       └── products/     # Preapproved product assets
-│           ├── water_bottle.png
-│           ├── sneaker.png
-│           └── coffee_mug.png
+│       ├── products/     # Preapproved product assets
+│       └── storefronts/  # Preapproved blank storefront templates
 ```
+
+---
+
+## 📁 Predefined Assets & Developer Guide
+
+All predefined options (Logos, Products, and Storefront Templates) in this application are **dynamically loaded** from their respective asset directories. 
+
+Adding a new predefined asset does **not** require modifying any application code! Simply drop your new image into the appropriate directory following this standard layout:
+
+### Asset Directory Locations:
+*   **Brand Logos:** `app/assets/logos/`
+*   **Brand Products:** `app/assets/products/`
+*   **Storefront Templates:** `app/assets/storefronts/`
+
+### How to Add Custom Preapproved Images:
+1.  **Prepare your image:** Make sure the image is in a standard format (`.png`, `.jpg`, or `.jpeg`). For logos and products, a transparent background or a high-contrast outline is highly recommended.
+2.  **Name the file nicely:** Name the file using snake_case or kebab-case. The app will automatically translate the filename into a clean, title-cased display option in the dropdown/selectors.
+    *   *Example:* Saving a file as `ultra_minimal_logo.png` inside `app/assets/logos/` will automatically appear in the Streamlit selector as **Ultra Minimal Logo**.
+3.  **Refresh the App:** Streamlit will automatically pick up the new image on the next generation or page reload!
 
 ---
 
