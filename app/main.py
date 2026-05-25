@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from PIL import Image
-from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs
+from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs, upload_custom_asset_to_gcs
 
 # Read optional GCS bucket for output archival
 GCS_OUTPUT_BUCKET = os.environ.get("GCS_OUTPUT_BUCKET", "image-bucket-sandbox-dce")
@@ -184,6 +184,18 @@ with tab1:
                     else:
                         prompt_text = base_mixer_prompt
                     
+                    # Archive custom user-uploaded references to GCS
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            prod_gcs_uri = upload_custom_asset_to_gcs(prod_img, GCS_OUTPUT_BUCKET, "mixer_product", "mixer")
+                            st.write(f"📸 Custom Product Reference archived to GCS: `{prod_gcs_uri}`")
+                            
+                            if model_choice_mixer == "Custom Upload...":
+                                model_gcs_uri = upload_custom_asset_to_gcs(model_img, GCS_OUTPUT_BUCKET, "mixer_model", "mixer")
+                                st.write(f"👤 Custom Model Reference archived to GCS: `{model_gcs_uri}`")
+                        except Exception as gcs_ref_err:
+                            st.warning(f"⚠️ Could not archive custom references to GCS: {str(gcs_ref_err)}")
+
                     result_img = generate_onbrand_asset(
                         parts_list=[prod_part, model_part],
                         prompt_text=prompt_text,
@@ -346,6 +358,21 @@ with tab2:
                     if extra_prompt.strip():
                         prompt_text += f"\nAdditional styling request: {extra_prompt}."
                         
+                    # Archive custom user-uploaded references to GCS
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            if logo_choice == "Custom Upload...":
+                                logo_gcs_uri = upload_custom_asset_to_gcs(logo_to_use, GCS_OUTPUT_BUCKET, "logos", "brand")
+                                st.write(f"🏷️ Custom Logo Reference archived to GCS: `{logo_gcs_uri}`")
+                            if product_choice == "Custom Upload...":
+                                prod_gcs_uri = upload_custom_asset_to_gcs(product_to_use, GCS_OUTPUT_BUCKET, "products", "brand")
+                                st.write(f"📦 Custom Product Reference archived to GCS: `{prod_gcs_uri}`")
+                            if model_choice_brand == "Custom Upload...":
+                                model_gcs_uri = upload_custom_asset_to_gcs(model_to_use_brand, GCS_OUTPUT_BUCKET, "models", "brand")
+                                st.write(f"👤 Custom Model Reference archived to GCS: `{model_gcs_uri}`")
+                        except Exception as gcs_ref_err:
+                            st.warning(f"⚠️ Could not archive custom references to GCS: {str(gcs_ref_err)}")
+
                     result_brand_img = generate_onbrand_asset(
                         parts_list=parts_list,
                         prompt_text=prompt_text,
@@ -471,6 +498,18 @@ with tab3:
                     if vis_extra_prompt.strip():
                         prompt_text += f"\nExtra design detail request: {vis_extra_prompt}."
                         
+                    # Archive custom user-uploaded references to GCS
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            design_gcs_uri = upload_custom_asset_to_gcs(design_img, GCS_OUTPUT_BUCKET, "designs", "visualizer")
+                            st.write(f"🎨 Custom Design Artwork archived to GCS: `{design_gcs_uri}`")
+                            
+                            if storefront_choice == "Custom Upload...":
+                                storefront_gcs_uri = upload_custom_asset_to_gcs(storefront_to_use, GCS_OUTPUT_BUCKET, "storefronts", "visualizer")
+                                st.write(f"🏪 Custom Storefront Template archived to GCS: `{storefront_gcs_uri}`")
+                        except Exception as gcs_ref_err:
+                            st.warning(f"⚠️ Could not archive custom references to GCS: {str(gcs_ref_err)}")
+
                     result_vis_img = generate_onbrand_asset(
                         parts_list=[design_part, storefront_part],
                         prompt_text=prompt_text,

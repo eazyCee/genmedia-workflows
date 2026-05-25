@@ -87,7 +87,7 @@ export GOOGLE_CLOUD_API_KEY="your-vertex-ai-api-key"
 ```
 
 #### Optional: Cloud Storage Archival
-To automatically archive all generated assets to a Google Cloud Storage bucket, configure the `GCS_OUTPUT_BUCKET` environment variable:
+To automatically archive all generated assets and custom user-uploaded reference files to a Google Cloud Storage bucket, configure the `GCS_OUTPUT_BUCKET` environment variable:
 ```bash
 export GCS_OUTPUT_BUCKET="your-gcs-bucket-name"
 ```

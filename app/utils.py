@@ -114,3 +114,25 @@ def upload_image_to_gcs(image: Image.Image, bucket_name: str, workflow_name: str
     blob.upload_from_string(img_bytes, content_type="image/png")
     
     return f"gs://{bucket_name}/{destination_blob_name}"
+
+def upload_custom_asset_to_gcs(image: Image.Image, bucket_name: str, asset_type: str, workflow_name: str) -> str:
+    """
+    Uploads a custom user-uploaded reference image to a specified GCS bucket.
+    Returns the GCS URI (e.g., gs://bucket/custom_uploads/logos/mixer_logo_20260525_170000.png)
+    """
+    if not bucket_name:
+        raise ValueError("GCS Bucket Name is not configured.")
+        
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+    
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    destination_blob_name = f"custom_uploads/{asset_type}/{workflow_name.lower()}_{timestamp}.png"
+    
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_string(img_bytes, content_type="image/png")
+    
+    return f"gs://{bucket_name}/{destination_blob_name}"
