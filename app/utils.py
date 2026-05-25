@@ -1,8 +1,10 @@
 import os
 import io
+import datetime
 from PIL import Image
 from google import genai
 from google.genai import types
+from google.cloud import storage
 
 def get_genai_client() -> genai.Client:
     """
@@ -85,3 +87,30 @@ def generate_onbrand_asset(parts_list: list, prompt_text: str, aspect_ratio: str
             return Image.open(io.BytesIO(image_bytes))
             
     raise ValueError("No image was found in the response parts.")
+
+def upload_image_to_gcs(image: Image.Image, bucket_name: str, workflow_name: str) -> str:
+    """
+    Uploads a PIL Image to a specified Google Cloud Storage bucket.
+    Returns the GCS URI (e.g., gs://bucket-name/generated_assets/mixer_20260525_123456.png)
+    """
+    if not bucket_name:
+        raise ValueError("GCS Bucket Name is not configured.")
+        
+    # Convert image to bytes
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+    
+    # Construct filename: e.g., generated_assets/mixer_20260525_123456.png
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    destination_blob_name = f"generated_assets/{workflow_name.lower()}_{timestamp}.png"
+    
+    # Initialize GCS client (uses standard ADC)
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    
+    # Upload bytes
+    blob.upload_from_string(img_bytes, content_type="image/png")
+    
+    return f"gs://{bucket_name}/{destination_blob_name}"

@@ -86,6 +86,14 @@ Set the `GOOGLE_CLOUD_API_KEY` environment variable:
 export GOOGLE_CLOUD_API_KEY="your-vertex-ai-api-key"
 ```
 
+#### Optional: Cloud Storage Archival
+To automatically archive all generated assets to a Google Cloud Storage bucket, configure the `GCS_OUTPUT_BUCKET` environment variable:
+```bash
+export GCS_OUTPUT_BUCKET="your-gcs-bucket-name"
+```
+When deploying, make sure the Cloud Run Service Account has the **Storage Object Creator** (`roles/storage.objectCreator`) permission for the GCS bucket.
+
+
 #### Option B: Using Application Default Credentials (ADC)
 Authenticate using the Google Cloud CLI:
 ```bash
@@ -131,7 +139,9 @@ gcloud run deploy onbrand-asset-creator \
 
 > [!IMPORTANT]
 > **Service Account Permissions:**  
-> Ensure that the default Cloud Run service account (or the custom service account you assign to the Cloud Run service) has the **Vertex AI User** (`roles/aiplatform.user`) role. This allows the service to call Gemini 3.1 on Vertex AI using ADC without needing hardcoded API keys.
+> Ensure that the default Cloud Run service account (or the custom service account you assign to the Cloud Run service) has:
+> 1. The **Vertex AI User** (`roles/aiplatform.user`) role to call the Gemini model on Vertex AI using ADC without needing hardcoded API keys.
+> 2. The **Storage Object Creator** (`roles/storage.objectCreator`) role on the GCS output bucket if you enable Cloud Storage archival.
 
 ---
 

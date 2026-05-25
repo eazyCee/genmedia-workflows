@@ -1,7 +1,10 @@
 import os
 import streamlit as st
 from PIL import Image
-from utils import pil_to_part, generate_onbrand_asset
+from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs
+
+# Read optional GCS bucket for output archival
+GCS_OUTPUT_BUCKET = os.environ.get("GCS_OUTPUT_BUCKET", "image-bucket-sandbox-dce")
 
 # Set page configuration
 st.set_page_config(
@@ -188,6 +191,15 @@ with tab1:
                     )
                     
                     st.success("Mixer Asset Generated Successfully!")
+                    
+                    # Optional GCS archival
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            gcs_uri = upload_image_to_gcs(result_img, GCS_OUTPUT_BUCKET, "mixer")
+                            st.info(f"🚀 Asset also archived to Cloud Storage: `{gcs_uri}`")
+                        except Exception as gcs_err:
+                            st.warning(f"⚠️ Could not archive to GCS: {str(gcs_err)}")
+                    
                     st.image(result_img, caption="Generated Mixed Asset", use_container_width=True)
                     
                     import io
@@ -341,6 +353,15 @@ with tab2:
                     )
                     
                     st.success("Brand-Aligned Asset Generated Successfully!")
+                    
+                    # Optional GCS archival
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            gcs_uri = upload_image_to_gcs(result_brand_img, GCS_OUTPUT_BUCKET, "brand")
+                            st.info(f"🚀 Asset also archived to Cloud Storage: `{gcs_uri}`")
+                        except Exception as gcs_err:
+                            st.warning(f"⚠️ Could not archive to GCS: {str(gcs_err)}")
+                    
                     st.image(result_brand_img, caption="Generated Brand Asset", use_container_width=True)
                     
                     import io
@@ -457,6 +478,15 @@ with tab3:
                     )
                     
                     st.success("Storefront Visualization Generated Successfully!")
+                    
+                    # Optional GCS archival
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            gcs_uri = upload_image_to_gcs(result_vis_img, GCS_OUTPUT_BUCKET, "visualizer")
+                            st.info(f"🚀 Asset also archived to Cloud Storage: `{gcs_uri}`")
+                        except Exception as gcs_err:
+                            st.warning(f"⚠️ Could not archive to GCS: {str(gcs_err)}")
+                    
                     st.image(result_vis_img, caption="Generated Storefront Preview", use_container_width=True)
                     
                     import io
