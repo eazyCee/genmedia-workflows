@@ -123,14 +123,26 @@ with tab1:
             
     with col2:
         st.subheader("2. Model Image")
-        uploaded_model_mixer = st.file_uploader(
-            "Upload model photo (PNG/JPG)", 
-            type=["png", "jpg", "jpeg"], 
-            key="mixer_model"
+        model_choice_mixer = st.radio(
+            "Select a preapproved model silhouette or upload custom:",
+            options=list(PREAPPROVED_MODELS.keys()) + ["Custom Upload..."],
+            key="mixer_model_choice"
         )
-        if uploaded_model_mixer:
-            model_img = Image.open(uploaded_model_mixer)
-            st.image(model_img, caption="Model Uploaded", use_container_width=True)
+        
+        model_img = None
+        if model_choice_mixer == "Custom Upload...":
+            uploaded_model_mixer = st.file_uploader(
+                "Upload model photo (PNG/JPG)", 
+                type=["png", "jpg", "jpeg"], 
+                key="mixer_model_upload"
+            )
+            if uploaded_model_mixer:
+                model_img = Image.open(uploaded_model_mixer)
+                st.image(model_img, caption="Model Uploaded", use_container_width=True)
+        else:
+            model_path_mixer = os.path.join(MODELS_DIR, PREAPPROVED_MODELS[model_choice_mixer])
+            model_img = Image.open(model_path_mixer)
+            st.image(model_img, caption=f"{model_choice_mixer} Preview", use_container_width=True)
             
     st.divider()
     
@@ -144,8 +156,10 @@ with tab1:
     generate_mixer = st.button("✨ Generate Mixed Asset", type="primary")
     
     if generate_mixer:
-        if not uploaded_product_mixer or not uploaded_model_mixer:
-            st.error("Please upload both a product image and a model image.")
+        if not uploaded_product_mixer:
+            st.error("Please upload a product image.")
+        elif model_img is None:
+            st.error("Please ensure a model is selected or uploaded.")
         else:
             with st.spinner("Synthesizing images using Gemini... This may take up to 30 seconds."):
                 try:
