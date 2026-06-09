@@ -226,7 +226,10 @@ with tab1:
                     You are an expert commercial fashion and product photographer.
                     Analyze the provided product image and the model image carefully.
                     Generate a single, highly cohesive, ultra-realistic commercial fashion photograph.
-                    The model must be naturally wearing, holding, or using the product as the main focal point.
+                    The model must be naturally wearing, holding, or using the product as the main focal point. Logically, the image should make sense.
+                    For example, if the product is a can/bottle/packaging item, the model should be holding it as a consumer would in their hands unless explicitly stated otherwise.
+                    If the product is an apparel, the model should be wearing them. So on and so forth.
+                    
                     Maintain immaculate physical shadow alignment, seamless material/edge blending, realistic surface textures, correct camera perspective, and high-end professional studio lighting.
                     The composition must feel highly organic, clean, and premium.
                     """
