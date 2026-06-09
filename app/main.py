@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 from PIL import Image
+from google.genai import types
 from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs, upload_custom_asset_to_gcs
 
 # Read optional GCS bucket for output archival
