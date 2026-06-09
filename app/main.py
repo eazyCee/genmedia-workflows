@@ -350,7 +350,10 @@ with tab1:
                     st.write(turn["text"])
             else:
                 with st.chat_message("assistant"):
-                    st.image(turn["image"], width=350, caption="Refined Output")
+                    import io
+                    buf_chat_img = io.BytesIO()
+                    turn["image"].save(buf_chat_img, format="PNG")
+                    st.image(buf_chat_img.getvalue(), width=350, caption="Refined Output")
                     
         # Multi-Turn Refinement Input Field
         refinement_query = st.chat_input("Suggest changes to improve or modify the image (e.g. 'Move the model to a sunny beach', 'Make the lighting warmer')")
