@@ -578,8 +578,12 @@ with tab2:
                         
                         prompt_text = f"""
                         Generate a premium, professional marketing advertisement.
-                        The main focus is the product.
-                        The product must be placed centrally and naturally within this environment setting: {setting_desc}.
+                        The main focus is the product and the model (if there is a model).
+                        If there is a model, the model must be naturally wearing, holding, or using the product as the main focal point. Logically, the image should make sense.
+                        For example, if the product is a can/bottle/packaging item, the model should be holding it as a consumer would in their hands unless explicitly stated otherwise.
+                        If the product is an apparel, the model should be wearing them. So on and so forth.
+                    
+                        The product must be placed naturally within this environment setting: {setting_desc}.
                         The logo must be clearly but elegantly integrated onto the product packaging/surface, or placed as a subtle watermark in a corner.
                         The color palette and lighting of the entire scene must strictly adhere to these brand guidelines: {color_desc}.
                         Ensure hyper-realistic rendering, accurate shadows, premium product highlights, and a high-end commercial aesthetic.
