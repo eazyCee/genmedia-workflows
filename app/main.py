@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from PIL import Image
 from google.genai import types
-from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs, upload_custom_asset_to_gcs, audit_generated_image, outpaint_image, isolate_product_image
+from utils import pil_to_part, generate_onbrand_asset, upload_image_to_gcs, upload_custom_asset_to_gcs, audit_generated_image, outpaint_image, isolate_product_image, list_gcs_gallery_images, delete_gcs_blob
 
 # Read optional GCS bucket for output archival
 GCS_OUTPUT_BUCKET = os.environ.get("GCS_OUTPUT_BUCKET", "image-bucket-sandbox-dce")
@@ -121,10 +121,11 @@ with st.sidebar:
     )
 
 # Define tabs for workflows
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "🔄 Product + Model Mixer", 
     "🏷️ Brand Asset Creator", 
-    "🏪 Storefront Visualizer"
+    "🏪 Storefront Visualizer",
+    "🖼️ Asset Gallery"
 ])
 
 # ==========================================================
@@ -349,16 +350,28 @@ with tab1:
         st.subheader("💬 Refinement Chat (Multi-Turn Edit)")
         
         # Display chat history log
-        for turn in st.session_state.mixer_chat_history:
+        assistant_indices = [i for i, t in enumerate(st.session_state.mixer_chat_history) if t["role"] == "assistant"]
+        
+        for idx, turn in enumerate(st.session_state.mixer_chat_history):
             if turn["role"] == "user":
                 with st.chat_message("user"):
                     st.write(turn["text"])
             else:
                 with st.chat_message("assistant"):
+                    is_most_recent = (len(assistant_indices) > 0 and idx == assistant_indices[-1])
+                    
                     import io
-                    buf_chat_img = io.BytesIO()
-                    turn["image"].save(buf_chat_img, format="PNG")
-                    st.image(buf_chat_img.getvalue(), width=350, caption="Refined Output", output_format="PNG")
+                    if is_most_recent:
+                        # Render the latest generated image directly
+                        buf_chat_img = io.BytesIO()
+                        turn["image"].save(buf_chat_img, format="PNG")
+                        st.image(buf_chat_img.getvalue(), width=350, caption="Refined Output (Most Recent)", output_format="PNG")
+                    else:
+                        # Collapse historical images to save container rendering bandwidth
+                        with st.expander("👁️ Show Historical Image Preview", expanded=False):
+                            buf_chat_img = io.BytesIO()
+                            turn["image"].save(buf_chat_img, format="PNG")
+                            st.image(buf_chat_img.getvalue(), width=300, caption=f"Refined Output (Turn {idx})", output_format="PNG")
                     
         # Multi-Turn Refinement Input Field
         refinement_query = st.chat_input("Suggest changes to improve or modify the image (e.g. 'Move the model to a sunny beach', 'Make the lighting warmer')")
@@ -941,3 +954,53 @@ with tab3:
             # Render report if available
             if st.session_state.vis_audit_report is not None:
                 st.markdown(st.session_state.vis_audit_report)
+
+# ==========================================================
+# TAB 4: ASSET GALLERY
+# ==========================================================
+with tab4:
+    st.header("🖼️ Generated Asset Gallery")
+    st.markdown("Browse, download, and delete generated marketing assets archived in Cloud Storage.")
+    
+    if not GCS_OUTPUT_BUCKET:
+        st.warning("⚠️ Cloud Storage Output Bucket is not configured. Gallery is unavailable.")
+    else:
+        st.info(f"📁 Displaying archived assets from GCS Bucket: `{GCS_OUTPUT_BUCKET}`")
+        
+        # Pull latest 16 items by default
+        gallery_items = list_gcs_gallery_images(GCS_OUTPUT_BUCKET, limit=16)
+        
+        if not gallery_items:
+            st.info("No generated assets found in GCS. Try creating some images first!")
+        else:
+            # Refresh control
+            st.button("🔄 Refresh Gallery", key="gallery_refresh_btn")
+            
+            # Responsive 4-column layout
+            cols = st.columns(4)
+            for idx, item in enumerate(gallery_items):
+                col_idx = idx % 4
+                with cols[col_idx]:
+                    st.image(item["bytes"], use_container_width=True, output_format="PNG")
+                    st.caption(f"📅 {item['updated'].strftime('%b %d, %Y %H:%M:%S')}")
+                    st.write(f"`{item['short_name']}`")
+                    
+                    col_dl, col_del = st.columns(2)
+                    with col_dl:
+                        st.download_button(
+                            label="📥 Download",
+                            data=item["bytes"],
+                            file_name=item["short_name"],
+                            mime="image/png",
+                            key=f"gallery_dl_{idx}"
+                        )
+                    with col_del:
+                        delete_click = st.button("🗑️ Delete", key=f"gallery_del_{idx}")
+                        if delete_click:
+                            with st.spinner("Deleting blob..."):
+                                try:
+                                    delete_gcs_blob(GCS_OUTPUT_BUCKET, item["name"])
+                                    st.success("Deleted!")
+                                    st.rerun()
+                                except Exception as del_err:
+                                    st.error(str(del_err))

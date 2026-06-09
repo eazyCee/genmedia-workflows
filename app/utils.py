@@ -211,4 +211,54 @@ def isolate_product_image(image: Image.Image) -> Image.Image:
         aspect_ratio="1:1"
     )
 
+def list_gcs_gallery_images(bucket_name: str, limit: int = 12) -> list:
+    """
+    Lists the latest images stored in the GCS bucket under generated_assets/
+    """
+    if not bucket_name:
+        return []
+        
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    
+    # List blobs under prefix
+    blobs = list(bucket.list_blobs(prefix="generated_assets/"))
+    
+    # Filter image blobs
+    img_blobs = [b for b in blobs if b.name.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    
+    # Sort by updated time descending (newest first)
+    img_blobs.sort(key=lambda x: x.updated, reverse=True)
+    
+    # Slice to limit
+    img_blobs = img_blobs[:limit]
+    
+    gallery = []
+    for blob in img_blobs:
+        try:
+            img_bytes = blob.download_as_bytes()
+            gallery.append({
+                "name": blob.name,
+                "bytes": img_bytes,
+                "updated": blob.updated,
+                "short_name": os.path.basename(blob.name)
+            })
+        except Exception:
+            pass
+        
+    return gallery
+
+def delete_gcs_blob(bucket_name: str, blob_name: str):
+    """
+    Deletes a specific blob from GCS.
+    """
+    if not bucket_name or not blob_name:
+        return
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    if blob.exists():
+        blob.delete()
+
+
 
