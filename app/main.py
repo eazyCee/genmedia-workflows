@@ -22,6 +22,9 @@ if "mixer_resized_img" not in st.session_state:
     st.session_state.mixer_resized_img = None
 if "mixer_audit_report" not in st.session_state:
     st.session_state.mixer_audit_report = None
+if "mixer_chat_history" not in st.session_state:
+    st.session_state.mixer_chat_history = []
+
 
 if "brand_result_images" not in st.session_state:
     st.session_state.brand_result_images = []
@@ -249,6 +252,10 @@ with tab1:
                     st.session_state.mixer_result_img = result_img
                     st.session_state.mixer_resized_img = None
                     st.session_state.mixer_audit_report = None
+                    st.session_state.mixer_chat_history = [
+                        {"role": "user", "text": f"Generate fashion shot. Placement instruction: {placement_instruction.strip() if placement_instruction.strip() else 'None'}"},
+                        {"role": "assistant", "image": result_img}
+                    ]
                     
                     # Optional GCS archival
                     if GCS_OUTPUT_BUCKET:
@@ -324,6 +331,71 @@ with tab1:
             # Render report if available
             if st.session_state.mixer_audit_report is not None:
                 st.markdown(st.session_state.mixer_audit_report)
+                
+        # 💬 Refinement Chat (Multi-Turn Dialogue)
+        st.divider()
+        st.subheader("💬 Refinement Chat (Multi-Turn Edit)")
+        
+        # Display chat history log
+        for turn in st.session_state.mixer_chat_history:
+            if turn["role"] == "user":
+                with st.chat_message("user"):
+                    st.write(turn["text"])
+            else:
+                with st.chat_message("assistant"):
+                    st.image(turn["image"], width=350, caption="Refined Output")
+                    
+        # Multi-Turn Refinement Input Field
+        refinement_query = st.chat_input("Suggest changes to improve or modify the image (e.g. 'Move the model to a sunny beach', 'Make the lighting warmer')")
+        if refinement_query:
+            # Append prompt to history list
+            st.session_state.mixer_chat_history.append({"role": "user", "text": refinement_query})
+            
+            with st.spinner("Applying refinements..."):
+                try:
+                    # Construct parts dynamically from in-scope file uploads
+                    prod_p = pil_to_part(prod_img)
+                    model_p = pil_to_part(model_img)
+                    prev_gen_p = pil_to_part(st.session_state.mixer_result_img)
+                    
+                    refinement_prompt = f"""
+                    You are given:
+                    1. The original product photo reference.
+                    2. The original model photo reference.
+                    3. The previous generated fashion photograph.
+                    
+                    The user wants to edit and refine the previous generated photograph with the following instructions:
+                    ---
+                    {refinement_query}
+                    ---
+                    
+                    Please generate a new ultra-realistic commercial fashion photograph that implements these refinements.
+                    Maintain physical consistency of the product appearance and the model's key features from the references.
+                    Ensure realistic shadow, light blending, and high aesthetic quality.
+                    """
+                    
+                    refined_img = generate_onbrand_asset(
+                        parts_list=[prod_p, model_p, prev_gen_p],
+                        prompt_text=refinement_prompt,
+                        aspect_ratio=aspect_ratio
+                    )
+                    
+                    # Update states
+                    st.session_state.mixer_result_img = refined_img
+                    st.session_state.mixer_resized_img = None
+                    st.session_state.mixer_audit_report = None
+                    st.session_state.mixer_chat_history.append({"role": "assistant", "image": refined_img})
+                    
+                    # GCS archival
+                    if GCS_OUTPUT_BUCKET:
+                        try:
+                            upload_image_to_gcs(refined_img, GCS_OUTPUT_BUCKET, "mixer_refinement")
+                        except:
+                            pass
+                            
+                    st.rerun()
+                except Exception as ref_err:
+                    st.error(f"Refinement failed: {str(ref_err)}")
 
 # ==========================================================
 # TAB 2: BRAND ASSET GENERATOR
