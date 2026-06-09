@@ -166,7 +166,7 @@ def audit_generated_image(image: Image.Image, brand_guidelines: str) -> str:
     """
     
     response = client.models.generate_content(
-        model="gemini-3.0-flash",
+        model="gemini-3.5-flash",
         contents=[img_part, audit_prompt]
     )
     
