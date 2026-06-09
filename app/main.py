@@ -280,13 +280,13 @@ with tab1:
             import io
             buf_img_m = io.BytesIO()
             st.session_state.mixer_result_img.save(buf_img_m, format="PNG")
-            st.image(buf_img_m.getvalue(), caption="Original Mixer Output", use_container_width=True)
+            st.image(buf_img_m.getvalue(), caption="Original Mixer Output", use_container_width=True, output_format="PNG")
             
             if st.session_state.mixer_resized_img is not None:
                 st.markdown("#### Expanded Canvas Version:")
                 buf_res_m = io.BytesIO()
                 st.session_state.mixer_resized_img.save(buf_res_m, format="PNG")
-                st.image(buf_res_m.getvalue(), caption="Resized Mixer Output", use_container_width=True)
+                st.image(buf_res_m.getvalue(), caption="Resized Mixer Output", use_container_width=True, output_format="PNG")
             
         with col_actions:
             st.subheader("Options")
@@ -353,7 +353,7 @@ with tab1:
                     import io
                     buf_chat_img = io.BytesIO()
                     turn["image"].save(buf_chat_img, format="PNG")
-                    st.image(buf_chat_img.getvalue(), width=350, caption="Refined Output")
+                    st.image(buf_chat_img.getvalue(), width=350, caption="Refined Output", output_format="PNG")
                     
         # Multi-Turn Refinement Input Field
         refinement_query = st.chat_input("Suggest changes to improve or modify the image (e.g. 'Move the model to a sunny beach', 'Make the lighting warmer')")
