@@ -363,29 +363,33 @@ with tab1:
             
             with st.spinner("Applying refinements..."):
                 try:
-                    # Construct parts dynamically from in-scope file uploads
                     prod_p = pil_to_part(prod_img)
                     model_p = pil_to_part(model_img)
                     prev_gen_p = pil_to_part(st.session_state.mixer_result_img)
                     
-                    refinement_prompt = f"""
-                    You are given:
-                    1. The original product photo reference.
-                    2. The original model photo reference.
-                    3. The previous generated fashion photograph.
+                    parts_list = [
+                        types.Part.from_text(text="Original Product Reference:"),
+                        prod_p,
+                        types.Part.from_text(text="Original Model Reference:"),
+                        model_p,
+                        types.Part.from_text(text="Previous Generated Photograph:"),
+                        prev_gen_p
+                    ]
                     
-                    The user wants to edit and refine the previous generated photograph with the following instructions:
+                    refinement_prompt = f"""
+                    Analyze the provided Original Product Reference, Original Model Reference, and Previous Generated Photograph.
+                    The user wants to refine the Previous Generated Photograph with this adjustment:
                     ---
                     {refinement_query}
                     ---
                     
-                    Please generate a new ultra-realistic commercial fashion photograph that implements these refinements.
-                    Maintain physical consistency of the product appearance and the model's key features from the references.
-                    Ensure realistic shadow, light blending, and high aesthetic quality.
+                    Please generate a brand new, updated commercial fashion photograph that implements these refinements.
+                    Make sure to keep the product appearance and the model's face consistent with the original references, but apply the changes requested by the user.
+                    Ensure professional studio lighting and clean compositions.
                     """
                     
                     refined_img = generate_onbrand_asset(
-                        parts_list=[prod_p, model_p, prev_gen_p],
+                        parts_list=parts_list,
                         prompt_text=refinement_prompt,
                         aspect_ratio=aspect_ratio
                     )
