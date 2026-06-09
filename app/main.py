@@ -252,9 +252,14 @@ with tab1:
                     st.session_state.mixer_result_img = result_img
                     st.session_state.mixer_resized_img = None
                     st.session_state.mixer_audit_report = None
+                    
+                    # Store a downscaled thumbnail copy in the chat history to prevent WebSocket size overflows
+                    chat_thumb = result_img.copy()
+                    chat_thumb.thumbnail((400, 400))
+                    
                     st.session_state.mixer_chat_history = [
                         {"role": "user", "text": f"Generate fashion shot. Placement instruction: {placement_instruction.strip() if placement_instruction.strip() else 'None'}"},
-                        {"role": "assistant", "image": result_img}
+                        {"role": "assistant", "image": chat_thumb}
                     ]
                     
                     # Optional GCS archival
@@ -398,7 +403,11 @@ with tab1:
                     st.session_state.mixer_result_img = refined_img
                     st.session_state.mixer_resized_img = None
                     st.session_state.mixer_audit_report = None
-                    st.session_state.mixer_chat_history.append({"role": "assistant", "image": refined_img})
+                    
+                    # Store a downscaled thumbnail copy in the chat history to prevent WebSocket size overflows
+                    chat_thumb = refined_img.copy()
+                    chat_thumb.thumbnail((400, 400))
+                    st.session_state.mixer_chat_history.append({"role": "assistant", "image": chat_thumb})
                     
                     # GCS archival
                     if GCS_OUTPUT_BUCKET:
