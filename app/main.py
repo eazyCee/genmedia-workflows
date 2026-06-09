@@ -276,10 +276,17 @@ with tab1:
         col_img, col_actions = st.columns([2, 1])
         
         with col_img:
-            st.image(st.session_state.mixer_result_img, caption="Original Mixer Output", use_container_width=True)
+            # Render using bytes to prevent Streamlit cache serialization bugs
+            import io
+            buf_img_m = io.BytesIO()
+            st.session_state.mixer_result_img.save(buf_img_m, format="PNG")
+            st.image(buf_img_m.getvalue(), caption="Original Mixer Output", use_container_width=True)
+            
             if st.session_state.mixer_resized_img is not None:
                 st.markdown("#### Expanded Canvas Version:")
-                st.image(st.session_state.mixer_resized_img, caption="Resized Mixer Output", use_container_width=True)
+                buf_res_m = io.BytesIO()
+                st.session_state.mixer_resized_img.save(buf_res_m, format="PNG")
+                st.image(buf_res_m.getvalue(), caption="Resized Mixer Output", use_container_width=True)
             
         with col_actions:
             st.subheader("Options")
@@ -627,11 +634,16 @@ with tab2:
             with cols[col_idx]:
                 st.markdown(f"#### Variant {idx+1}: **{variant['colorway']}** in **{variant['setting']}**")
                 
-                # Image Display (show resized/outpainted version if available)
+                # Image Display (show resized/outpainted version if available) using bytes to prevent Streamlit cache serialization bugs
+                import io
                 if variant["resized_image"] is not None:
-                    st.image(variant["resized_image"], caption=f"Variant {idx+1} (Resized)", use_container_width=True)
+                    buf_res_b = io.BytesIO()
+                    variant["resized_image"].save(buf_res_b, format="PNG")
+                    st.image(buf_res_b.getvalue(), caption=f"Variant {idx+1} (Resized)", use_container_width=True)
                 else:
-                    st.image(variant["image"], caption=f"Variant {idx+1} (Original)", use_container_width=True)
+                    buf_orig_b = io.BytesIO()
+                    variant["image"].save(buf_orig_b, format="PNG")
+                    st.image(buf_orig_b.getvalue(), caption=f"Variant {idx+1} (Original)", use_container_width=True)
                 
                 if variant["gcs_uri"]:
                     st.caption(f"☁️ GCS Archive: `{variant['gcs_uri']}`")
@@ -845,10 +857,17 @@ with tab3:
         col_img_v, col_actions_v = st.columns([2, 1])
         
         with col_img_v:
-            st.image(st.session_state.vis_result_img, caption="Original Storefront Preview", use_container_width=True)
+            # Render using bytes to prevent Streamlit cache serialization bugs
+            import io
+            buf_img_v = io.BytesIO()
+            st.session_state.vis_result_img.save(buf_img_v, format="PNG")
+            st.image(buf_img_v.getvalue(), caption="Original Storefront Preview", use_container_width=True)
+            
             if st.session_state.vis_resized_img is not None:
                 st.markdown("#### Expanded Canvas Version:")
-                st.image(st.session_state.vis_resized_img, caption="Resized Storefront Preview", use_container_width=True)
+                buf_res_v = io.BytesIO()
+                st.session_state.vis_resized_img.save(buf_res_v, format="PNG")
+                st.image(buf_res_v.getvalue(), caption="Resized Storefront Preview", use_container_width=True)
             
         with col_actions_v:
             st.subheader("Options")
